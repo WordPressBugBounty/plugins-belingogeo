@@ -202,6 +202,8 @@ function belingo_geo_settings() {
 	//register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_disable_url' );
 	//register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_redirect_page' );
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_finding_nonecity' );
+	register_setting( 'belingo_geo_excludes', 'belingo_geo_disable_subdomain_redirect' );
+	register_setting( 'belingo_geo_excludes', 'belingo_geo_disable_subdirectory_redirect' );
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_show_first_city_when_nonecity' );
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_sitemap_per_page' );
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_exclude_nonobject' );
@@ -209,6 +211,7 @@ function belingo_geo_settings() {
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_show_in_breadcrumbs' );
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_url_type' );
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_rewrite_cookie_by_url' );
+	register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_rewrite_cookie_by_url_on_nogeo' );
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_forced_confirmation_city');
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_default_text_nonecity' );
 	register_setting( 'belingo_geo_excludes', 'belingo_geo_basic_filter_links_by_url' );
@@ -401,6 +404,36 @@ function belingo_geo_settings() {
 	);
 
 	add_settings_field( 
+		'belingo_geo_disable_subdomain_redirect', 
+		__('Disable forced redirect in subdomain mode', 'belingogeo'),
+		'belingo_geo_display_settings', 
+		$settings_page, 
+		'belingo_geo_basic', 
+		array( 
+			'type'      => 'checkbox',
+			'option_name' => 'belingo_geo_disable_subdomain_redirect',
+			'descr' 	=> __('By default, in subdomain mode, if the city is stored in a cookie and the current page isn\'t excluded, but the current subdomain is different, a forced redirect will occur. This option disables this redirect.', 'belingogeo'),
+			'post_type'	=> false,
+			'disabled'  => true,
+			'is_pro'	=> true
+		)
+	);
+
+	add_settings_field( 
+		'belingo_geo_disable_subdirectory_redirect', 
+		__('Disable forced redirect in subdirectory mode', 'belingogeo'),
+		'belingo_geo_display_settings', 
+		$settings_page, 
+		'belingo_geo_basic', 
+		array( 
+			'type'      => 'checkbox',
+			'option_name' => 'belingo_geo_disable_subdirectory_redirect',
+			'descr' 	=> __('By default, in subdirectory mode, if the city is stored in a cookie and the current page isn\'t excluded, but the current city is different, a forced redirect will occur. This option disables this redirect.', 'belingogeo'),
+			'post_type'	=> false
+		)
+	);
+
+	add_settings_field( 
 		'belingo_geo_exclude_nonobject', 
 		__('Exclude anything that is not a registered entity', 'belingogeo'),
 		'belingo_geo_display_settings', 
@@ -586,6 +619,20 @@ function belingo_geo_settings() {
 			'type'      => 'checkbox',
 			'option_name' => 'belingo_geo_basic_rewrite_cookie_by_url',
 			'descr' 	=> __('When going to pages or subdomains via a direct link, the cookie will be overwritten with the city from the URL.', 'belingogeo'),
+			'post_type'	=> false
+		)
+	);
+
+	add_settings_field( 
+		'belingo_geo_basic_rewrite_cookie_by_url_on_nogeo', 
+		__('Overwrite cookies when following a direct link without a city', 'belingogeo'),
+		'belingo_geo_display_settings', 
+		$settings_page, 
+		'belingo_geo_basic', 
+		array( 
+			'type'      => 'checkbox',
+			'option_name' => 'belingo_geo_basic_rewrite_cookie_by_url_on_nogeo',
+			'descr' 	=> __('When you navigate to pages without a city, via a direct link, the cookie will be reset. This only works if the general cookie overwrite is enabled.', 'belingogeo'),
 			'post_type'	=> false
 		)
 	);

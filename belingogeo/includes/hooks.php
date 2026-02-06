@@ -12,7 +12,33 @@ function belingogeo_city_title( $title ) {
 
 }
 
-remove_filter('template_redirect','redirect_canonical');
+add_filter( 'redirect_canonical', 'belingogeo_redirect_canonical', 10, 2 );
+function belingogeo_redirect_canonical( $redirect_url, $requested_url ) {
+
+	if( is_front_page() && get_option( 'belingo_geo_url_type' ) == 'subdirectory' ) {
+		$parsed_requested_url = parse_url( $requested_url );
+		if( !preg_match( '/\/$/', $parsed_requested_url['path'] ) ) {
+			if( isset( $_SERVER['QUERY_STRING'] ) && !empty( $_SERVER['QUERY_STRING'] ) ) {
+				$redirect_url = str_replace( '?', '/?', $requested_url );
+			}else{
+				$redirect_url = $requested_url . '/';
+			}
+		}else{
+			$redirect_url = false;
+		}
+	}
+
+	if( preg_match( '/sitemap.*\.xml/', $_SERVER['REQUEST_URI'] ) ) {
+		$redirect_url = false;
+	}
+
+	if( is_404() ) {
+		$redirect_url = false;
+	}
+
+	return $redirect_url;
+
+}
 
 add_action( 'wp_enqueue_scripts', 'belingogeo_ajax_data', 99 );
 function belingogeo_ajax_data() {
@@ -104,7 +130,7 @@ function belingogeo_rewrite_rules_array( $rules ) {
 	$cities = belingoGeo_get_cities($args);
 	$i = 1;
 	foreach($rules as $key => $rule) {
-		if(belingogeo_check_disallow_rule($key)) {
+		if(belingogeo_check_disallow_rule($key, $rule)) {
 			foreach($cities as $city) {
 				if($rule == 'index.php?product_cat=$matches[1]' || $rule == 'index.php?product_cat=$matches[1]&paged=$matches[2]') {
 					$belingoGeo_rules_woo_categories[$city->get_slug().'/'.$key] = $rule.'&geo_city='.$city->get_slug();
@@ -122,7 +148,7 @@ function belingogeo_rewrite_rules_array( $rules ) {
 	if(count($belingoGeo_rules_woo_categories) > 0) {
 		$belingoGeo_rules = array_slice($belingoGeo_rules, 0, $belingoGeo_rules_last_woo_rule, true) +
 				   $belingoGeo_rules_woo_categories +
-				   array_slice($belingoGeo_rules, $belingoGeo_rules_last_woo_rule, count($belingoGeo_rules) - 1, true);
+				   array_slice($belingoGeo_rules, $belingoGeo_rules_last_woo_rule, count($belingoGeo_rules), true);
 	}
 
 	$belingoGeo_frontpage_rules = belingogeo_rewrite_frontpage($cities);
@@ -160,6 +186,8 @@ function belingogeo_generate_links($url, $object) {
 			$object_id = $object->term_id;
 		}elseif($object_name == 'WP_Post') {
 			$object_id = $object->ID;
+		}else{
+			$object_id = false;
 		}
 	}else{
 		$object_name = 'WP_Post';
@@ -183,7 +211,7 @@ function belingogeo_generate_links($url, $object) {
 
 	$original_url = $url;
 
-	if(!belingogeo_is_exclude($object_id, $object_name)) {
+	if( !belingogeo_is_exclude( $object_id, $object_name ) && !preg_match( '/sitemap.*\.xml/', $_SERVER['REQUEST_URI'] ) ) {
 		$url = belingoGeo_append_city_url($url, $city_slug);
 	}
 
@@ -194,6 +222,8 @@ add_filter( 'page_link', 'belingogeo_generate_links', 10, 2 );
 add_filter( 'post_link', 'belingogeo_generate_links', 10, 2 );
 add_filter( 'term_link', 'belingogeo_generate_links', 10, 2 );
 add_filter( 'post_type_link', 'belingogeo_generate_links', 10, 2 );
+add_filter( 'month_link', 'belingogeo_generate_links', 10, 2 );
+add_filter( 'year_link', 'belingogeo_generate_links', 10, 2 );
 
 add_action( 'admin_footer-edit.php', function () {
 	global $post_type_object;

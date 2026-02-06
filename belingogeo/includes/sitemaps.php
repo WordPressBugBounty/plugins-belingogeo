@@ -133,6 +133,11 @@ function belingogeo_modify_yaost_sitemap() {
 				$xml .= belingoGeo_get_xml_sitemap($url);
 				$page++;
 			}
+			$url = [
+				"loc" => get_site_url() . '/'.$city->get_slug().'_sitemap_tax_category.xml',
+				"lastmod" => date('c',time())
+			];
+			$xml .= belingoGeo_get_xml_sitemap($url);
 		}
 		$belingo_geo_exclude_all_pages = get_option('belingo_geo_exclude_all_pages');
 		if(!$belingo_geo_exclude_all_pages) {
@@ -213,11 +218,13 @@ function belingoGeo_get_sitemap_post_urls($city,$per_page,$page) {
 			if($current_city) {
 				$loc = belingogeo_remove_city_url($loc, $current_city->get_slug());
 			}
-			$loc = belingoGeo_append_city_url($loc, $city);
-			$urls[] = [
-				"loc" => $loc,
-				"lastmod" => date('c',strtotime($post_item->post_modified))
-			];
+			if( !belingogeo_is_exclude( $post_item->ID, 'WP_Post', $city ) ) {
+				$loc = belingoGeo_append_city_url($loc, $city);
+				$urls[] = [
+					"loc" => $loc,
+					"lastmod" => date('c',strtotime($post_item->post_modified))
+				];
+			}
 		}
 	}
 
@@ -253,11 +260,13 @@ function belingoGeo_get_sitemap_page_urls($city,$per_page,$page) {
 			if($current_city) {
 				$loc = belingogeo_remove_city_url($loc, $current_city->get_slug());
 			}
-			$loc = belingoGeo_append_city_url($loc, $city);
-			$urls[] = [
-				"loc" => $loc,
-				"lastmod" => date('c',strtotime($post_item->post_modified))
-			];
+			if( !belingogeo_is_exclude( $post_item->ID, 'WP_Post', $city ) ) {
+				$loc = belingoGeo_append_city_url($loc, $city);
+				$urls[] = [
+					"loc" => $loc,
+					"lastmod" => date('c',strtotime($post_item->post_modified))
+				];
+			}
 		}
 	}
 
@@ -284,11 +293,13 @@ function belingoGeo_get_sitemap_custom_posts_urls($city,$per_page,$page,$post_ty
 				if($current_city) {
 					$loc = belingogeo_remove_city_url($loc, $current_city->get_slug());
 				}
-				$loc = belingoGeo_append_city_url($loc, $city);
-				$urls[] = [
-					"loc" => $loc,
-					"lastmod" => date('c',strtotime($post_item->post_modified))
-				];
+				if( !belingogeo_is_exclude( $post_item->ID, 'WP_Post_Type', $city ) ) {
+					$loc = belingoGeo_append_city_url($loc, $city);
+					$urls[] = [
+						"loc" => $loc,
+						"lastmod" => date('c',strtotime($post_item->post_modified))
+					];
+				}
 			}
 		}
 	}
@@ -303,7 +314,7 @@ function belingoGeo_get_sitemap_taxonomies_urls($city,$taxonomy) {
 
 	$exclude_taxonomies = get_option('belingo_geo_exclude_taxonomies');
 
-	if(!array_key_exists($taxonomy, $exclude_taxonomies)) {
+	if(!array_key_exists($taxonomy, (array)$exclude_taxonomies)) {
 
 		$terms = get_terms(array(
 			'taxonomy' => $taxonomy
